@@ -10,7 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,15 +45,17 @@ fun ProfileScreen(
     val perDay = IntArray(7)
     tasks.filter { it.isCompleted }.forEach { t -> weekdayIndex(t.date)?.let { perDay[it]++ } }
     val maxPerDay = (perDay.maxOrNull() ?: 0).coerceAtLeast(1)
-    val todayIndex = weekdayIndex(todayStr)
     val dayLabels = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
 
     // Lấy thông tin User thật từ Firebase
     val user = Firebase.auth.currentUser
-    val displayName = user?.displayName ?: "Người dùng ẩn danh"
-    val email = user?.email ?: "Tài khoản dùng thử"
-    val initial = displayName.firstOrNull()?.uppercase() ?: "K"
-    val isAnonymous = user?.isAnonymous ?: true
+    val displayName = user?.displayName ?: "Khách"
+    val email = user?.email ?: "Chưa liên kết tài khoản"
+    val initial = displayName.trim().split("\\s+".toRegex()).let { parts ->
+        if (parts.size >= 2) "${parts[0].first()}${parts.last().first()}".uppercase()
+        else displayName.take(2).uppercase()
+    }
+    val isAnonymous = user == null || user.isAnonymous
 
     Scaffold(
         topBar = {
@@ -63,7 +69,6 @@ fun ProfileScreen(
                     }
                 },
                 actions = {
-                    // Để cân bằng khoảng trống bên phải
                     Spacer(modifier = Modifier.width(72.dp))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = AppPalette.bg)
@@ -75,10 +80,10 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             // Avatar
             Box(
                 modifier = Modifier
@@ -86,14 +91,14 @@ fun ProfileScreen(
                     .background(AppPalette.primarySoft, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text(initial, color = AppPalette.primary, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                Text(initial, color = AppPalette.primary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(displayName, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppPalette.text)
-            Text(email, fontSize = 14.sp, color = AppPalette.textSecondary)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(displayName, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = AppPalette.text)
+            Text(email, fontSize = 13.sp, color = AppPalette.textSecondary)
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Badge liên kết Google (Chỉ hiện nếu không phải tài khoản dùng thử)
+            // Hiển thị nút "Liên kết Google" nếu chưa đăng nhập Google, hoặc Badge "Đã liên kết tài khoản Google" nếu đã đăng nhập Google
             if (!isAnonymous) {
                 Row(
                     modifier = Modifier
@@ -101,24 +106,46 @@ fun ProfileScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Đã liên kết tài khoản Google", color = Color(0xFF4CAF50), fontSize = 12.sp)
+                    Text(
+                        "Đã liên kết tài khoản Google",
+                        color = Color(0xFF4CAF50),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            } else {
+                OutlinedButton(
+                    onClick = { /* Liên kết Google action */ },
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = AppPalette.surface, contentColor = AppPalette.text),
+                    border = BorderStroke(1.dp, AppPalette.border),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Text("G", fontWeight = FontWeight.Bold, color = AppPalette.primary, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Liên kết Google", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Stats row
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                StatItem("$doneCount", "Việc đã xong")
-                StatItem("$pendingCount", "Đang chờ")
-                StatItem("$percent%", "Hoàn thành")
+            // Stats row (3 cards)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                StatCard(modifier = Modifier.weight(1f), value = "$doneCount", label = "Việc đã xong")
+                StatCard(modifier = Modifier.weight(1f), value = "$pendingCount", label = "Đang chờ")
+                StatCard(modifier = Modifier.weight(1f), value = "$percent%", label = "Hoàn thành")
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Chart Placeholder
+            // Weekly Chart Card
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -126,17 +153,17 @@ fun ProfileScreen(
                     .padding(16.dp)
             ) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Tuần này", fontWeight = FontWeight.Bold, color = AppPalette.text)
+                    Text("Tuần này", fontWeight = FontWeight.Bold, color = AppPalette.text, fontSize = 15.sp)
                     Text("Việc xong mỗi ngày", color = AppPalette.textTertiary, fontSize = 12.sp)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth().height(100.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {
                     dayLabels.forEachIndexed { i, label ->
-                        ChartBar(label, perDay[i] * 0.9f / maxPerDay, isToday = (i == todayIndex))
+                        ChartBar(label = label, count = perDay[i], maxCount = maxPerDay)
                     }
                 }
             }
@@ -144,46 +171,59 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             // Logout Button
-            OutlinedButton(
+            Button(
                 onClick = onLogout,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 32.dp)
-                    .height(50.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
-                border = BorderStroke(1.dp, Color.Red),
-                shape = RoundedCornerShape(12.dp)
+                    .padding(bottom = 24.dp)
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AppPalette.surface),
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
-                Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
+                Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null, tint = Color(0xFFE5484D))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Đăng xuất", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Đăng xuất", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFFE5484D))
             }
         }
     }
 }
 
 @Composable
-fun StatItem(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppPalette.text)
-        Text(label, fontSize = 12.sp, color = AppPalette.textSecondary)
+fun StatCard(modifier: Modifier = Modifier, value: String, label: String) {
+    Column(
+        modifier = modifier
+            .background(AppPalette.surface, RoundedCornerShape(16.dp))
+            .padding(vertical = 16.dp, horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(value, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = AppPalette.text)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(label, fontSize = 11.sp, color = AppPalette.textSecondary, textAlign = TextAlign.Center)
     }
 }
 
 @Composable
-fun ChartBar(label: String, fraction: Float, isToday: Boolean = false) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom, modifier = Modifier.fillMaxHeight()) {
-        if (fraction > 0f) {
-            Box(
-                modifier = Modifier
-                    .width(16.dp)
-                    .fillMaxHeight(fraction)
-                    .background(
-                        if (isToday) AppPalette.primary else Color(0xFF93A7F4),
-                        RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
-                    )
-            )
-        }
+fun ChartBar(label: String, count: Int, maxCount: Int) {
+    val barHeight = if (maxCount > 0 && count > 0) {
+        (64 * (count.toFloat() / maxCount)).coerceIn(16f, 64f).dp
+    } else {
+        4.dp
+    }
+    val barColor = if (count > 0) AppPalette.primary else AppPalette.border
+    val barShape = if (count > 0) RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp) else RoundedCornerShape(2.dp)
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Bottom,
+        modifier = Modifier.height(90.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .width(18.dp)
+                .height(barHeight)
+                .background(barColor, barShape)
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(label, fontSize = 10.sp, color = AppPalette.textSecondary)
     }
@@ -197,18 +237,18 @@ fun ProfileScreenPreview() {
 /** 0 = Thứ Hai ... 6 = Chủ Nhật; null nếu ngày không hợp lệ. */
 private fun weekdayIndex(date: String): Int? {
     if (date.length != 10) return null
-    val fmt = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).apply {
-        timeZone = java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
+    val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
+        timeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
     }
     val d = runCatching { fmt.parse(date) }.getOrNull() ?: return null
-    val cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh")).apply { time = d }
-    return when (cal.get(java.util.Calendar.DAY_OF_WEEK)) {
-        java.util.Calendar.MONDAY -> 0
-        java.util.Calendar.TUESDAY -> 1
-        java.util.Calendar.WEDNESDAY -> 2
-        java.util.Calendar.THURSDAY -> 3
-        java.util.Calendar.FRIDAY -> 4
-        java.util.Calendar.SATURDAY -> 5
+    val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh")).apply { time = d }
+    return when (cal.get(Calendar.DAY_OF_WEEK)) {
+        Calendar.MONDAY -> 0
+        Calendar.TUESDAY -> 1
+        Calendar.WEDNESDAY -> 2
+        Calendar.THURSDAY -> 3
+        Calendar.FRIDAY -> 4
+        Calendar.SATURDAY -> 5
         else -> 6
     }
 }
