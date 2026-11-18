@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
@@ -92,7 +93,11 @@ fun HomeScreen(
                     progressPercent = progressPercent
                 )
                 Spacer(modifier = Modifier.height(20.dp))
-                CategorySection(studyRemaining = studyRemaining, lifeRemaining = lifeRemaining)
+                CategorySection(
+                    studyRemaining = studyRemaining,
+                    lifeRemaining = lifeRemaining,
+                    onCategoryClick = { onNavigate("task_list") }
+                )
                 Spacer(modifier = Modifier.height(20.dp))
                 TaskSection(
                     tasks = tasks,
@@ -207,10 +212,12 @@ fun ProgressCard(
 }
 
 @Composable
-fun CategorySection(studyRemaining: Int, lifeRemaining: Int) {
+fun CategorySection(studyRemaining: Int, lifeRemaining: Int, onCategoryClick: () -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         CategoryCard(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onCategoryClick() },
             icon = Icons.Outlined.School,
             iconColor = AppPalette.categoryBlue,
             iconBg = AppPalette.categoryBlueBg,
@@ -218,7 +225,9 @@ fun CategorySection(studyRemaining: Int, lifeRemaining: Int) {
             subtitle = "$studyRemaining việc còn lại"
         )
         CategoryCard(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onCategoryClick() },
             icon = Icons.Outlined.Home,
             iconColor = Color(0xFFA24A08),
             iconBg = Color(0xFFFFEBD9),
@@ -233,7 +242,8 @@ fun CategoryCard(modifier: Modifier, icon: ImageVector, iconColor: Color, iconBg
     // Đúng thông số Figma: Radius 18dp, Padding 16dp, Gap 10dp
     Column(
         modifier = modifier
-            .background(AppPalette.surface, RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .background(AppPalette.surface)
             .padding(16.dp)
     ) {
         // Khung Icon 36x36, Radius 10dp

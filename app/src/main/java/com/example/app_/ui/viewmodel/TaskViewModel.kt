@@ -1,18 +1,21 @@
 package com.example.app_.ui.viewmodel
 
+import android.app.Application
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.app_.data.ApiException
 import com.example.app_.data.ApiTask
 import com.example.app_.data.TaskApi
 import com.example.app_.ui.screen.SubTaskItem
 import com.example.app_.ui.screen.TodoTask
+import com.example.app_.util.NotificationHelper
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -25,7 +28,7 @@ data class AddTaskUiState(
     val note: String = "",
     val category: String = "Học tập",
     val dateOption: String = "Hôm nay",
-    val time: String = "19:00",
+    val time: String = currentRealTimeStr(),
     val isReminderEnabled: Boolean = true,
     val reminderOption: String = "Trước 15 phút",
     val priority: String = "Vừa",
@@ -40,6 +43,11 @@ private val VN_TZ: TimeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
 private fun dateFormat() = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = VN_TZ }
 
 private fun realToday(): String = dateFormat().format(Calendar.getInstance(VN_TZ).time)
+
+private fun currentRealTimeStr(): String {
+    val cal = Calendar.getInstance(VN_TZ)
+    return String.format(Locale.US, "%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+}
 
 private fun addDays(date: String, days: Int): String {
     val fmt = dateFormat()
@@ -117,7 +125,9 @@ private fun ApiTask.toTodo(today: String): TodoTask {
     )
 }
 
-class TaskViewModel : ViewModel() {
+class TaskViewModel(application: Application) : AndroidViewModel(application) {
+    private val context: Context get() = getApplication<Application>().applicationContext
+
     // Danh sách công việc (nguồn dữ liệu duy nhất cho UI), nạp từ API
     val tasks = mutableStateListOf<TodoTask>()
 
@@ -176,13 +186,7 @@ class TaskViewModel : ViewModel() {
             errorMessage = null
             try {
                 val result = TaskApi.getTasks()
-                // Nếu dữ liệu mock không có việc nào của ngày thật hôm nay, lấy ngày sớm nhất làm "hôm nay"
-                val real = realToday()
-                todayStr = if (result.isEmpty() || result.any { it.date == real }) {
-                    real
-                } else {
-                    result.map { it.date }.filter { it.length == 10 }.minOrNull() ?: real
-                }
+                todayStr = realToday()
                 tasks.clear()
                 tasks.addAll(result.map { it.toTodo(todayStr) })
             } catch (e: ApiException) {
@@ -279,7 +283,7 @@ class TaskViewModel : ViewModel() {
     }
 
     fun resetAddTaskForm() {
-        addTaskUiState = AddTaskUiState()
+        addTaskUiState = AddTaskUiState(time = currentRealTimeStr())
     }
 
     /** Mở màn Sửa: nạp dữ liệu công việc vào form. */
@@ -343,6 +347,7 @@ class TaskViewModel : ViewModel() {
                     tasks.add(0, shown.toTodo(todayStr)) // Thêm vào đầu danh sách
                     resetAddTaskForm()
                     showToast("Đã thêm công việc")
+                    NotificationHelper.showNotification(context, "Công việc mới", "Đã tạo: $title lúc ${form.time}")
                     onSuccess(newId)
                 } else {
                     val index = tasks.indexOfFirst { it.id == editId }
