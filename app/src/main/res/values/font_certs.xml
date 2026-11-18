@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="com_google_android_gms_fonts_certs">
+        <item>@array/com_google_android_gms_fonts_certs_dev</item>
+        <item>@array/com_google_android_gms_fonts_certs_prod</item>
+    </array>
+    <string-array name="com_google_android_gms_fonts_certs_dev">
+        <item>
+            MIIEQzCCAyugAwIBAgIJA0L1pL7pT1WvMA0GCSqGSIb3DQEBCwUAMIGUMQswCQYD
+            VQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNTW91bnRhaW4g
+            VmlldzEVMBMGA1UEChMMR29vZ2xlLCBJbmMuMQwwCgYDVQQLEwNBbmQxEDAOBgNV
+            BAMTB0FuZHJvaWQxITAfBgkqhkiG9w0BCQEWEmFuZHJvaWRAZ29vZ2xlLmNvbTAe
+            Fw0wODEwMjIxODI1MjVaFw0zODEwMDcxODI1MjVaMIGUMQswCQYDVQQGEwJVUzET
+            MBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEVMBMG
+            A1UEChMMR29vZ2xlLCBJbmMuMQwwCgYDVQQLEwNBbmQxEDAOBgNVBAMTB0FuZHJv
+            aWQxITAfBgkqhkiG9w0BCQEWEmFuZHJvaWRAZ29vZ2xlLmNvbTCCASIwDQYJKoZI
+            hvcNAQEBBQADggEPADCCAQOCggEBAL2Wvy70r8yHnlyC7jG5XyYjO/x21K+xMhTl
+            yf8x3eWl4M1K2n31a93wX25v71a762z1G88YI5C1L69P5jU
+        </item>
+    </string-array>
+    <string-array name="com_google_android_gms_fonts_certs_prod">
+        <item>
+            MIIEQzCCAyugAwIBAgIJA0L1pL7pT1WvMA0GCSqGSIb3DQEBCwUAMIGUMQswCQYD
+            VQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNTW91bnRhaW4g
+            VmlldzEVMBMGA1UEChMMR29vZ2xlLCBJbmMuMQwwCgYDVQQLEwNBbmQxEDAOBgNV
+            BAMTB0FuZHJvaWQxITAfBgkqhkiG9w0BCQEWEmFuZHJvaWRAZ29vZ2xlLmNvbTAe
+            Fw0wODEwMjIxODI1MjVaFw0zODEwMDcxODI1MjVaMIGUMQswCQYDVQQGEwJVUzET
+            MBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEVMBMG
+            A1UEChMMR29vZ2xlLCBJbmMuMQwwCgYDVQQLEwNBbmQxEDAOBgNVBAMTB0FuZHJv
+            aWQxITAfBgkqhkiG9w0BCQEWEmFuZHJvaWRAZ29vZ2xlLmNvbTCCASIwDQYJKoZI
+            hvcNAQEBBQADggEPADCCAQOCggEBAL2Wvy70r8yHnlyC7jG5XyYjO/x21K+xMhTl
+            yf8x3eWl4M1K2n31a93wX25v71a762z1G88YI5C1L69P5jU
+        </item>
+    </string-array>
+</resources>
